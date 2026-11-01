@@ -1,0 +1,8 @@
+<resources>
+    <!-- Nama aplikasi yang muncul di layar dan drawer sistem -->
+    <string name="app_name">Launch APK</string>
+    
+    <!-- Teks pelengkap untuk accessibility dan dialog -->
+    <string name="title_choose_favorite">Pilih Aplikasi Favorit</string>
+    <string name="action_cancel">Batal</string>
+</resources>
