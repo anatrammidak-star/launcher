@@ -1,10 +1,14 @@
 package com.minimal.rulerlauncher
 
+import android.app.role.RoleManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +44,53 @@ class MainActivity : AppCompatActivity() {
         loadInstalledApps()
         setupFavorites()
         setupRuler()
+
+        checkDefaultLauncher()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Muat ulang daftar jika ada aplikasi yang baru diinstal/dihapus
+        if (allApps.isEmpty()) {
+            loadInstalledApps()
+        }
+    }
+
+    private fun checkDefaultLauncher() {
+        if (!isCurrentLauncherDefault()) {
+            promptSetDefaultLauncher()
+        }
+    }
+
+    private fun isCurrentLauncherDefault(): Boolean {
+        val intent = Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_HOME) }
+        val resolveInfo = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        val defaultLauncherPackage = resolveInfo?.activityInfo?.packageName
+        return defaultLauncherPackage == packageName
+    }
+
+    private fun promptSetDefaultLauncher() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)
+            if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                if (!roleManager.isRoleHeld(RoleManager.ROLE_HOME)) {
+                    val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+                    startActivity(intent)
+                    return
+                }
+            }
+        }
+        
+        // Cadangan untuk HP Xiaomi/MIUI atau Android versi sebelumnya
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            startActivity(intent)
+        } catch (_: Exception) {
+            try {
+                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+                startActivity(intent)
+            } catch (_: Exception) {}
+        }
     }
 
     private fun setupRecyclerView() {
