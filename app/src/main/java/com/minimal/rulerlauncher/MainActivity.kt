@@ -42,7 +42,6 @@ class MainActivity : AppCompatActivity() {
         setupFavorites()
         setupRuler()
 
-        // Buka default awal pada huruf A
         rulerView.setSelectedLetter('A')
         filterAppsByLetter('A')
     }
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
             val rawIcon = ri.loadIcon(pm)
             
             // Ekstrak pola asli ke dalam squircle outline putih
-            val minimalistIcon = IconHelper.createMinimalistIcon(rawIcon, label)
+            val minimalistIcon = IconHelper.createMinimalistIcon(rawIcon)
             allApps.add(AppModel(label, pkg, minimalistIcon))
         }
         allApps.sortBy { it.label.lowercase() }
@@ -124,9 +123,7 @@ class MainActivity : AppCompatActivity() {
         if (pkgName != null) {
             try {
                 val rawIcon = packageManager.getApplicationIcon(pkgName)
-                val appInfo = packageManager.getApplicationInfo(pkgName, 0)
-                val label = packageManager.getApplicationLabel(appInfo).toString()
-                iv.setImageDrawable(IconHelper.createMinimalistIcon(rawIcon, label))
+                iv.setImageDrawable(IconHelper.createMinimalistIcon(rawIcon))
                 iv.alpha = 1.0f
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
