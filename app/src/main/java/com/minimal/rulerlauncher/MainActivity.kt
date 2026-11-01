@@ -81,8 +81,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRuler() {
-        val ruler = findViewById<RulerSliderView>(R.id.rulerSlider)
-        ruler.onLetterSelectedListener = { letter ->
+        val ruler: RulerSliderView = findViewById(R.id.rulerSlider)
+        ruler.onLetterSelectedListener = { letter: Char ->
             filterAppsByLetter(letter)
         }
     }
@@ -92,7 +92,6 @@ class MainActivity : AppCompatActivity() {
             val iv = favoriteViews[slotIndex]
             updateFavoriteSlotIcon(slotIndex, iv)
 
-            // Ketuk biasa: Luncurkan aplikasi atau minta pilih jika belum disetel
             iv.setOnClickListener {
                 val pkgName = prefs.getString("fav_slot_$slotIndex", null)
                 if (pkgName != null) {
@@ -107,7 +106,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Tekan dan tahan: Ganti aplikasi favorit untuk slot ini
             iv.setOnLongClickListener {
                 showAppPickerDialog(slotIndex)
                 true
@@ -125,7 +123,6 @@ class MainActivity : AppCompatActivity() {
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
         }
-        // Ikon cadangan jika slot masih kosong
         imageView.setImageResource(android.R.drawable.ic_input_add)
         imageView.alpha = 0.4f
     }
@@ -144,9 +141,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // Tetap kosong agar menekan tombol back di beranda tidak menutup launcher
-    }
+    override fun onBackPressed() {}
 
     inner class AppAdapter(
         private val list: List<AppModel>,
@@ -170,6 +165,6 @@ class MainActivity : AppCompatActivity() {
             holder.itemView.setOnClickListener { onClick(app) }
         }
 
-        override fun getItemCount() = list.size
+        override fun getItemCount(): Int = list.size
     }
 }
