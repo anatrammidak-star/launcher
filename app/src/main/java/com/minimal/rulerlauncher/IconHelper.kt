@@ -11,30 +11,26 @@ import android.graphics.drawable.Drawable
 
 object IconHelper {
 
-    /**
-     * Mengubah ikon aplikasi apa pun menjadi ikon monokrom putih minimalis
-     */
     fun toMinimalistIcon(drawable: Drawable): Drawable {
-        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
-        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
+        val w = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
+        val h = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
 
-        // Matriks warna: Mengubah piksel berwarna menjadi grayscale lalu mencerahkannya menjadi putih
-        val colorMatrix = ColorMatrix(floatArrayOf(
-            0.33f, 0.33f, 0.33f, 0f, 150f,
-            0.33f, 0.33f, 0.33f, 0f, 150f,
-            0.33f, 0.33f, 0.33f, 0f, 150f,
-            0f,    0f,    0f,    1f, 0f
-        ))
-
-        val output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        // Membuat siluet putih bersih bergaris
+        val output = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val outCanvas = Canvas(output)
+        
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            colorFilter = ColorMatrixColorFilter(colorMatrix)
+            colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
+                0f, 0f, 0f, 0f, 255f,
+                0f, 0f, 0f, 0f, 255f,
+                0f, 0f, 0f, 0f, 255f,
+                0.3f, 0.59f, 0.11f, 0f, 0f
+            )))
         }
         outCanvas.drawBitmap(bitmap, 0f, 0f, paint)
 
