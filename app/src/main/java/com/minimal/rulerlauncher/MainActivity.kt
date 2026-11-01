@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         setupFavorites()
         setupRuler()
 
-        // Default awal pada huruf A
+        // Buka default awal pada huruf A
         rulerView.setSelectedLetter('A')
         filterAppsByLetter('A')
     }
@@ -69,10 +69,11 @@ class MainActivity : AppCompatActivity() {
             val pkg = ri.activityInfo.packageName
             if (pkg == packageName) continue
             val label = ri.loadLabel(pm).toString()
+            val rawIcon = ri.loadIcon(pm)
             
-            // Ikon outline minimalis murni dari label aplikasi
-            val outlineIcon = IconHelper.createMinimalistIcon(label)
-            allApps.add(AppModel(label, pkg, outlineIcon))
+            // Ekstrak pola asli ke dalam squircle outline putih
+            val minimalistIcon = IconHelper.createMinimalistIcon(rawIcon, label)
+            allApps.add(AppModel(label, pkg, minimalistIcon))
         }
         allApps.sortBy { it.label.lowercase() }
     }
@@ -122,15 +123,15 @@ class MainActivity : AppCompatActivity() {
         val pkgName = prefs.getString("fav_slot_$slotIndex", null)
         if (pkgName != null) {
             try {
+                val rawIcon = packageManager.getApplicationIcon(pkgName)
                 val appInfo = packageManager.getApplicationInfo(pkgName, 0)
                 val label = packageManager.getApplicationLabel(appInfo).toString()
-                iv.setImageDrawable(IconHelper.createMinimalistIcon(label))
+                iv.setImageDrawable(IconHelper.createMinimalistIcon(rawIcon, label))
                 iv.alpha = 1.0f
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
         }
 
-        // Ikon tambah default jika slot kosong
         iv.setImageResource(android.R.drawable.ic_input_add)
         iv.alpha = 0.35f
     }
