@@ -42,9 +42,9 @@ class MainActivity : AppCompatActivity() {
         setupFavorites()
         setupRuler()
 
-        // Buka pada huruf Z secara default
-        rulerView.setSelectedLetter('Z')
-        filterAppsByLetter('Z')
+        // Default awal pada huruf A
+        rulerView.setSelectedLetter('A')
+        filterAppsByLetter('A')
     }
 
     private fun setupRecyclerView() {
@@ -69,10 +69,9 @@ class MainActivity : AppCompatActivity() {
             val pkg = ri.activityInfo.packageName
             if (pkg == packageName) continue
             val label = ri.loadLabel(pm).toString()
-            val rawIcon = ri.loadIcon(pm)
             
-            // Konversi dinamis ke outline putih
-            val outlineIcon = IconHelper.toMinimalistOutline(rawIcon)
+            // Ikon outline minimalis murni dari label aplikasi
+            val outlineIcon = IconHelper.createMinimalistIcon(label)
             allApps.add(AppModel(label, pkg, outlineIcon))
         }
         allApps.sortBy { it.label.lowercase() }
@@ -98,7 +97,6 @@ class MainActivity : AppCompatActivity() {
             val iv = favoriteViews[slotIndex]
             updateFavoriteSlotView(slotIndex, iv)
 
-            // Klik biasa: Buka aplikasi
             iv.setOnClickListener {
                 val pkgName = prefs.getString("fav_slot_$slotIndex", null)
                 if (pkgName != null) {
@@ -113,7 +111,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Tahan lama: Ubah pilihan aplikasi favorit
             iv.setOnLongClickListener {
                 showAppPickerDialog(slotIndex)
                 true
@@ -125,16 +122,17 @@ class MainActivity : AppCompatActivity() {
         val pkgName = prefs.getString("fav_slot_$slotIndex", null)
         if (pkgName != null) {
             try {
-                val rawIcon = packageManager.getApplicationIcon(pkgName)
-                iv.setImageDrawable(IconHelper.toMinimalistOutline(rawIcon))
+                val appInfo = packageManager.getApplicationInfo(pkgName, 0)
+                val label = packageManager.getApplicationLabel(appInfo).toString()
+                iv.setImageDrawable(IconHelper.createMinimalistIcon(label))
                 iv.alpha = 1.0f
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
         }
-        
-        // Ikon placeholder default jika slot belum diisi aplikasi
+
+        // Ikon tambah default jika slot kosong
         iv.setImageResource(android.R.drawable.ic_input_add)
-        iv.alpha = 0.3f
+        iv.alpha = 0.35f
     }
 
     private fun showAppPickerDialog(slotIndex: Int) {
@@ -144,7 +142,8 @@ class MainActivity : AppCompatActivity() {
             .setItems(appNames) { _, which ->
                 val selectedApp = allApps[which]
                 prefs.edit().putString("fav_slot_$slotIndex", selectedApp.packageName).apply()
-                updateFavoriteSlotView(slotIndex, favoriteViews[slotIndex])
+                favoriteViews[slotIndex].setImageDrawable(selectedApp.icon)
+                favoriteViews[slotIndex].alpha = 1.0f
             }
             .setNegativeButton("Batal", null)
             .show()
