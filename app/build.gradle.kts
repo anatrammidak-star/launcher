@@ -24,6 +24,16 @@ android {
             )
         }
     }
+// Mengubah nama file keluaran .apk
+    applicationVariants.all {
+        val variant = this
+        variant.outputs
+            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach { output ->
+                output.outputFileName = "launch_apk.apk"
+            }
+    }
+}
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
