@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.minimal.rulerlauncher">
 
-    <!-- Izin query semua aplikasi terinstal untuk Android 11 (API 30)+ -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -14,6 +13,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_launcher"
+        android:supportsRtl="true"
         android:theme="@style/Theme.RulerLauncher">
 
         <activity
@@ -27,6 +27,8 @@
                 <!-- Kategori Launcher Utama -->
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <!-- Tambahan agar bisa dibuka langsung dan muncul di app drawer -->
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
