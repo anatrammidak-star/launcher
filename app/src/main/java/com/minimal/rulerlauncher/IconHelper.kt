@@ -3,37 +3,53 @@ package com.minimal.rulerlauncher
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 
 object IconHelper {
 
-    fun toMinimalistIcon(drawable: Drawable): Drawable {
-        val w = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
-        val h = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
+    fun toMinimalistOutline(drawable: Drawable): Drawable {
+        val size = 96
+        val srcBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val srcCanvas = Canvas(srcBitmap)
+        drawable.setBounds(0, 0, size, size)
+        drawable.draw(srcCanvas)
 
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
+        val outBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(size * size)
+        srcBitmap.getPixels(pixels, 0, size, 0, 0, size, size)
 
-        // Membuat siluet putih bersih bergaris
-        val output = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val outCanvas = Canvas(output)
-        
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            colorFilter = ColorMatrixColorFilter(ColorMatrix(floatArrayOf(
-                0f, 0f, 0f, 0f, 255f,
-                0f, 0f, 0f, 0f, 255f,
-                0f, 0f, 0f, 0f, 255f,
-                0.3f, 0.59f, 0.11f, 0f, 0f
-            )))
+        val outPixels = IntArray(size * size)
+
+        // Deteksi tepi (edge detection) untuk membuat garis outline putih
+        for (y in 1 until size - 1) {
+            for (x in 1 until size - 1) {
+                val idx = y * size + x
+                val alpha = (pixels[idx] ushr 24) and 0xFF
+
+                if (alpha > 50) {
+                    val aLeft = (pixels[idx - 1] ushr 24) and 0xFF
+                    val aRight = (pixels[idx + 1] ushr 24) and 0xFF
+                    val aTop = (pixels[idx - size] ushr 24) and 0xFF
+                    val aBottom = (pixels[idx + size] ushr 24) and 0xFF
+
+                    // Jika berada di perbatasan piksel atau kontur detail
+                    val isEdge = (aLeft < 50 || aRight < 50 || aTop < 50 || aBottom < 50)
+                    
+                    // Juga deteksi perbedaan kontras di dalam gambar
+                    val lum = (Color.red(pixels[idx]) + Color.green(pixels[idx]) + Color.blue(pixels[idx])) / 3
+                    val lumRight = (Color.red(pixels[idx + 1]) + Color.green(pixels[idx + 1]) + Color.blue(pixels[idx + 1])) / 3
+                    val isContrast = Math.abs(lum - lumRight) > 35
+
+                    if (isEdge || isContrast) {
+                        outPixels[idx] = Color.WHITE
+                    }
+                }
+            }
         }
-        outCanvas.drawBitmap(bitmap, 0f, 0f, paint)
 
-        return BitmapDrawable(null, output)
+        outBitmap.setPixels(outPixels, 0, size, 0, 0, size, size)
+        return BitmapDrawable(null, outBitmap)
     }
 }
