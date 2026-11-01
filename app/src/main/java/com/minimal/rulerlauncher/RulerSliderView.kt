@@ -20,11 +20,11 @@ class RulerSliderView @JvmOverloads constructor(
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        textSize = 28f
+        textSize = 40f
     }
 
     private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeWidth = 2f
+        strokeWidth = 3f
         color = Color.parseColor("#333333")
     }
 
@@ -39,16 +39,16 @@ class RulerSliderView @JvmOverloads constructor(
             val y = (i * step) + (step / 2)
             val isSelected = (i == selectedIndex)
 
-            // Gambar garis skala penggaris di sisi kiri huruf
-            val tickLength = if (isSelected) 24f else 10f
-            tickPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#383838")
-            canvas.drawLine(8f, y, 8f + tickLength, y, tickPaint)
+            // Garis skala penggaris
+            val tickLength = if (isSelected) 28f else 12f
+            tickPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#444444")
+            canvas.drawLine(6f, y, 6f + tickLength, y, tickPaint)
 
-            // Gambar huruf A-Z
-            textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#666666")
-            textPaint.textSize = if (isSelected) 36f else 24f
+            // Huruf A-Z dibesarkan 1.7x
+            textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#777777")
+            textPaint.textSize = if (isSelected) 60f else 40f
             textPaint.isFakeBoldText = isSelected
-            canvas.drawText(alphabet[i].toString(), 36f, y + 8f, textPaint)
+            canvas.drawText(alphabet[i].toString(), 46f, y + 14f, textPaint)
         }
     }
 
@@ -57,7 +57,7 @@ class RulerSliderView @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 val step = height.toFloat() / alphabet.size
                 val rawIndex = (event.y / step).toInt().coerceIn(0, alphabet.size - 1)
-                
+
                 if (rawIndex != selectedIndex) {
                     selectedIndex = rawIndex
                     performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
