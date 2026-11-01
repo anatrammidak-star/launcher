@@ -1,0 +1,8 @@
+<!-- themes.xml -->
+<resources>
+    <style name="Theme.RulerLauncher" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/bg_amoled</item>
+        <item name="android:statusBarColor">@color/bg_amoled</item>
+        <item name="android:navigationBarColor">@color/bg_amoled</item>
+    </style>
+</resources>
