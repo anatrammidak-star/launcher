@@ -17,7 +17,7 @@ object IconHelper {
         val outputBitmap = Bitmap.createBitmap(totalSize, totalSize, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(outputBitmap)
 
-        // 1. Gambar bingkai luar squircle padat putih/abu terang
+        // 1. Gambar bingkai garis luar squircle padat putih/abu terang
         val strokeWidth = 4.5f
         val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -30,39 +30,28 @@ object IconHelper {
         val cornerRadius = 26f
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, strokePaint)
 
-        // 2. Ekstrak simbol asli aplikasi dengan membuang background padat
-        val extractedSymbol = extractForegroundPattern(rawDrawable, 64)
+        // 2. Ekstrak pola grafis asli aplikasi
+        val innerPattern = extractShapePattern(rawDrawable, 60)
 
-        if (extractedSymbol != null) {
-            val left = (totalSize - 64) / 2f
-            val top = (totalSize - 64) / 2f
-            canvas.drawBitmap(extractedSymbol, left, top, null)
-        } else {
-            // Cadangan jika ikon bawaan transparan penuh/rusak: inisial huruf tegas
-            val letter = if (label.isNotBlank()) label.trim().first().uppercaseChar().toString() else "?"
-            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.WHITE
-                textSize = 46f
-                textAlign = Paint.Align.CENTER
-            }
-            val textY = (canvas.height / 2f) - ((textPaint.descent() + textPaint.ascent()) / 2f)
-            canvas.drawText(letter, canvas.width / 2f, textY, textPaint)
-        }
+        val left = (totalSize - 60) / 2f
+        val top = (totalSize - 60) / 2f
+        canvas.drawBitmap(innerPattern, left, top, null)
 
         return BitmapDrawable(null, outputBitmap)
     }
 
     /**
-     * Mengekstrak pola simbol dengan menghapus warna background bawaan ikon
+     * Mengekstrak pola/bentuk grafis asli aplikasi menjadi siluet putih padat
      */
-    private fun extractForegroundPattern(drawable: Drawable, targetSize: Int): Bitmap? {
+    private fun extractShapePattern(drawable: Drawable, targetSize: Int): Bitmap {
+        // Ambil layer foreground jika Adaptive Icon, agar terbebas dari base-layer sistem
         val targetDrawable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && drawable is AdaptiveIconDrawable) {
             drawable.foreground ?: drawable
         } else {
             drawable
         }
 
-        // Render ikon ke bitmap target
+        // Render ikon ke bitmap berukuran target
         val srcBitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
         val srcCanvas = Canvas(srcBitmap)
         targetDrawable.setBounds(0, 0, targetSize, targetSize)
@@ -71,58 +60,60 @@ object IconHelper {
         val pixels = IntArray(targetSize * targetSize)
         srcBitmap.getPixels(pixels, 0, targetSize, 0, 0, targetSize, targetSize)
 
-        // Deteksi warna background dari sudut-sudut ikon (kiri atas, kanan atas, kiri bawah, kanan bawah)
-        val cornerColors = listOf(
-            pixels[0],
-            pixels[targetSize - 1],
-            pixels[targetSize * (targetSize - 1)],
-            pixels[targetSize * targetSize - 1]
-        )
+        // Hitung rata-rata kecerahan (luminance) piksel yang terlihat
+        var totalLum = 0L
+        var visibleCount = 0
+        for (c in pixels) {
+            val a = (c ushr 24) and 0xFF
+            if (a > 30) {
+                val r = Color.red(c)
+                val g = Color.green(c)
+                val b = Color.blue(c)
+                totalLum += (r * 299 + g * 587 + b * 114) / 1000
+                visibleCount++
+            }
+        }
+        val avgLum = if (visibleCount > 0) (totalLum / visibleCount).toInt() else 128
 
-        // Ambil warna sudut yang paling dominan / tidak transparan
-        val bgSample = cornerColors.firstOrNull { ((it ushr 24) and 0xFF) > 50 } ?: 0
-        val hasSolidBg = ((bgSample ushr 24) and 0xFF) > 50
-
-        val bgR = Color.red(bgSample)
-        val bgG = Color.green(bgSample)
-        val bgB = Color.blue(bgSample)
+        // Deteksi apakah simbol aplikasi biasanya lebih terang dari latar (seperti logo putih WhatsApp)
+        // atau simbolnya lebih gelap dari latar
+        val sampleCorner = pixels[0]
+        val cornerA = (sampleCorner ushr 24) and 0xFF
+        val cornerLum = if (cornerA > 30) {
+            (Color.red(sampleCorner) * 299 + Color.green(sampleCorner) * 587 + Color.blue(sampleCorner) * 114) / 1000
+        } else {
+            -1
+        }
 
         val outPixels = IntArray(targetSize * targetSize)
-        var foregroundPixelCount = 0
 
         for (i in pixels.indices) {
             val c = pixels[i]
             val a = (c ushr 24) and 0xFF
 
-            if (a < 40) {
+            if (a < 30) {
                 outPixels[i] = Color.TRANSPARENT
                 continue
             }
 
-            if (hasSolidBg) {
-                // Hitung selisih jarak warna piksel terhadap warna background
-                val r = Color.red(c)
-                val g = Color.green(c)
-                val b = Color.blue(c)
-                val diff = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB)
+            val r = Color.red(c)
+            val g = Color.green(c)
+            val b = Color.blue(c)
+            val lum = (r * 299 + g * 587 + b * 114) / 1000
 
-                // Jika warnanya berbeda signifikan dari background, ini adalah pola/simbol intinya
-                if (diff > 45) {
-                    outPixels[i] = Color.WHITE
-                    foregroundPixelCount++
-                } else {
-                    outPixels[i] = Color.TRANSPARENT
-                }
+            val isPattern = if (cornerLum != -1) {
+                // Jika sudut memiliki warna latar belakang, pisahkan pola berdasarkan perbedaan luminansi dari sudut
+                Math.abs(lum - cornerLum) > 35
             } else {
-                // Jika ikon aslinya sudah berlatar transparan, langsung jadikan polanya putih
-                outPixels[i] = Color.WHITE
-                foregroundPixelCount++
+                // Jika sudut transparan, seluruh bentuk terlihat adalah pola itu sendiri
+                true
             }
-        }
 
-        // Jika pemisahan warna gagal menghasilkan pola (misal ikon monokrom polos), kembalikan null agar dialihkan ke inisial
-        if (foregroundPixelCount < 20 || foregroundPixelCount > (targetSize * targetSize * 0.85)) {
-            return null
+            if (isPattern) {
+                outPixels[i] = Color.WHITE
+            } else {
+                outPixels[i] = Color.TRANSPARENT
+            }
         }
 
         val resultBitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
