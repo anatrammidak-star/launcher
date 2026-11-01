@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@color/bg_amoled"
     android:paddingStart="24dp"
-    android:paddingEnd="8dp">
+    android:paddingEnd="4dp">
 
     <!-- Jam & Tanggal -->
     <LinearLayout
@@ -35,44 +35,40 @@
             android:fontFamily="sans-serif" />
     </LinearLayout>
 
-    <!-- 4 Ikon Favorit Horisontal (24dp) -->
+    <!-- 4 Ikon Favorit Horisontal (Diperbesar 2x menjadi 44dp, tanpa tint) -->
     <LinearLayout
         android:id="@+id/favContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/headerClock"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="28dp"
         android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/favWhatsApp"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="20dp"
-            android:tint="@color/text_primary"
             android:contentDescription="WhatsApp" />
 
         <ImageView
             android:id="@+id/favMaps"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="20dp"
-            android:tint="@color/text_primary"
             android:contentDescription="Maps" />
 
         <ImageView
             android:id="@+id/favChrome"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginEnd="20dp"
-            android:tint="@color/text_primary"
             android:contentDescription="Chrome" />
 
         <ImageView
             android:id="@+id/favGallery"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:tint="@color/text_primary"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:contentDescription="Gallery" />
     </LinearLayout>
 
@@ -83,13 +79,13 @@
         android:layout_height="match_parent"
         android:layout_below="@id/favContainer"
         android:layout_toStartOf="@id/rulerSlider"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="24dp"
         android:overScrollMode="never" />
 
-    <!-- Custom View Navigasi Penggaris A-Z -->
+    <!-- Ruler Slider Vertikal A-Z -->
     <com.minimal.rulerlauncher.RulerSliderView
         android:id="@+id/rulerSlider"
-        android:layout_width="48dp"
+        android:layout_width="64dp"
         android:layout_height="match_parent"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="50dp"
