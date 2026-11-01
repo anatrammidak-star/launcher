@@ -1,14 +1,11 @@
 package com.minimal.rulerlauncher
 
-import android.app.role.RoleManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.os.Build
+import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +13,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -44,53 +42,6 @@ class MainActivity : AppCompatActivity() {
         loadInstalledApps()
         setupFavorites()
         setupRuler()
-
-        checkDefaultLauncher()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Muat ulang daftar jika ada aplikasi yang baru diinstal/dihapus
-        if (allApps.isEmpty()) {
-            loadInstalledApps()
-        }
-    }
-
-    private fun checkDefaultLauncher() {
-        if (!isCurrentLauncherDefault()) {
-            promptSetDefaultLauncher()
-        }
-    }
-
-    private fun isCurrentLauncherDefault(): Boolean {
-        val intent = Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_HOME) }
-        val resolveInfo = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        val defaultLauncherPackage = resolveInfo?.activityInfo?.packageName
-        return defaultLauncherPackage == packageName
-    }
-
-    private fun promptSetDefaultLauncher() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val roleManager = getSystemService(RoleManager::class.java)
-            if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
-                if (!roleManager.isRoleHeld(RoleManager.ROLE_HOME)) {
-                    val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME)
-                    startActivity(intent)
-                    return
-                }
-            }
-        }
-        
-        // Cadangan untuk HP Xiaomi/MIUI atau Android versi sebelumnya
-        try {
-            val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-            startActivity(intent)
-        } catch (_: Exception) {
-            try {
-                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
-                startActivity(intent)
-            } catch (_: Exception) {}
-        }
     }
 
     private fun setupRecyclerView() {
@@ -101,6 +52,26 @@ class MainActivity : AppCompatActivity() {
             launchIntent?.let { startActivity(it) }
         }
         rvApps.adapter = appAdapter
+    }
+
+    private fun getCustomMinimalIcon(packageName: String, originalIcon: Drawable): Drawable {
+        val resName = when {
+            packageName.contains("whatsapp", ignoreCase = true) -> "ic_minimal_wa"
+            packageName.contains("maps", ignoreCase = true) -> "ic_minimal_maps"
+            packageName.contains("chrome", ignoreCase = true) -> "ic_minimal_chrome"
+            packageName.contains("gallery", ignoreCase = true) || packageName.contains("photos", ignoreCase = true) -> "ic_minimal_gallery"
+            packageName.contains("zoom", ignoreCase = true) -> "ic_minimal_zoom"
+            else -> null
+        }
+
+        if (resName != null) {
+            val resId = resources.getIdentifier(resName, "drawable", this.packageName)
+            if (resId != 0) {
+                val vectorDrawable = ResourcesCompat.getDrawable(resources, resId, theme)
+                if (vectorDrawable != null) return vectorDrawable
+            }
+        }
+        return IconHelper.toMinimalistIcon(originalIcon)
     }
 
     private fun loadInstalledApps() {
@@ -115,8 +86,9 @@ class MainActivity : AppCompatActivity() {
             val pkg = ri.activityInfo.packageName
             if (pkg == packageName) continue
             val label = ri.loadLabel(pm).toString()
-            val icon = ri.loadIcon(pm)
-            allApps.add(AppModel(label, pkg, icon))
+            val rawIcon = ri.loadIcon(pm)
+            val minimalistIcon = getCustomMinimalIcon(pkg, rawIcon)
+            allApps.add(AppModel(label, pkg, minimalistIcon))
         }
         allApps.sortBy { it.label.lowercase() }
 
@@ -168,8 +140,9 @@ class MainActivity : AppCompatActivity() {
         val pkgName = prefs.getString("fav_slot_$slotIndex", null)
         if (pkgName != null) {
             try {
-                val icon = packageManager.getApplicationIcon(pkgName)
-                imageView.setImageDrawable(icon)
+                val rawIcon = packageManager.getApplicationIcon(pkgName)
+                val minimalIcon = getCustomMinimalIcon(pkgName, rawIcon)
+                imageView.setImageDrawable(minimalIcon)
                 imageView.alpha = 1.0f
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
