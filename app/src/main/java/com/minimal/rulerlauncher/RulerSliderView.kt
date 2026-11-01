@@ -16,16 +16,14 @@ class RulerSliderView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val alphabet = ('A'..'Z').toList()
-    private var selectedIndex = 0
+    private var selectedIndex = 25 // Default Z sesuai gambar acuan
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        textSize = 40f
     }
 
     private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeWidth = 3f
-        color = Color.parseColor("#333333")
+        strokeCap = Paint.Cap.ROUND
     }
 
     var onLetterSelectedListener: ((Char) -> Unit)? = null
@@ -36,19 +34,28 @@ class RulerSliderView @JvmOverloads constructor(
         val step = h / alphabet.size
 
         for (i in alphabet.indices) {
-            val y = (i * step) + (step / 2)
+            val y = (i * step) + (step / 2f)
             val isSelected = (i == selectedIndex)
 
-            // Garis skala penggaris
-            val tickLength = if (isSelected) 28f else 12f
+            // Garis skala utama tepat di samping huruf
+            val mainTickLen = if (isSelected) 22f else 12f
+            tickPaint.strokeWidth = if (isSelected) 2.5f else 1.5f
             tickPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#444444")
-            canvas.drawLine(6f, y, 6f + tickLength, y, tickPaint)
+            canvas.drawLine(10f, y, 10f + mainTickLen, y, tickPaint)
 
-            // Huruf A-Z dibesarkan 1.7x
-            textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#777777")
-            textPaint.textSize = if (isSelected) 60f else 40f
+            // Sub-garis milimeter pendek di antara huruf (gaya penggaris presisi)
+            if (i < alphabet.size - 1) {
+                val subY = y + (step / 2f)
+                tickPaint.strokeWidth = 1f
+                tickPaint.color = Color.parseColor("#262626")
+                canvas.drawLine(10f, subY, 10f + 6f, subY, tickPaint)
+            }
+
+            // Teks huruf A-Z
+            textPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#666666")
+            textPaint.textSize = if (isSelected) 36f else 24f
             textPaint.isFakeBoldText = isSelected
-            canvas.drawText(alphabet[i].toString(), 46f, y + 14f, textPaint)
+            canvas.drawText(alphabet[i].toString(), 42f, y + 8f, textPaint)
         }
     }
 
@@ -68,5 +75,13 @@ class RulerSliderView @JvmOverloads constructor(
             }
         }
         return super.onTouchEvent(event)
+    }
+
+    fun setSelectedLetter(letter: Char) {
+        val idx = alphabet.indexOf(letter.uppercaseChar())
+        if (idx != -1 && idx != selectedIndex) {
+            selectedIndex = idx
+            invalidate()
+        }
     }
 }
