@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +12,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -23,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private val displayedApps = mutableListOf<AppModel>()
     private lateinit var appAdapter: AppAdapter
     private lateinit var rvApps: RecyclerView
+    private lateinit var rulerView: RulerSliderView
     private lateinit var prefs: SharedPreferences
 
     private val favoriteViews = mutableListOf<ImageView>()
@@ -42,6 +41,10 @@ class MainActivity : AppCompatActivity() {
         loadInstalledApps()
         setupFavorites()
         setupRuler()
+
+        // Buka pada huruf Z secara default
+        rulerView.setSelectedLetter('Z')
+        filterAppsByLetter('Z')
     }
 
     private fun setupRecyclerView() {
@@ -52,26 +55,6 @@ class MainActivity : AppCompatActivity() {
             launchIntent?.let { startActivity(it) }
         }
         rvApps.adapter = appAdapter
-    }
-
-    private fun getCustomMinimalIcon(packageName: String, originalIcon: Drawable): Drawable {
-        val resName = when {
-            packageName.contains("whatsapp", ignoreCase = true) -> "ic_minimal_wa"
-            packageName.contains("maps", ignoreCase = true) -> "ic_minimal_maps"
-            packageName.contains("chrome", ignoreCase = true) -> "ic_minimal_chrome"
-            packageName.contains("gallery", ignoreCase = true) || packageName.contains("photos", ignoreCase = true) -> "ic_minimal_gallery"
-            packageName.contains("zoom", ignoreCase = true) -> "ic_minimal_zoom"
-            else -> null
-        }
-
-        if (resName != null) {
-            val resId = resources.getIdentifier(resName, "drawable", this.packageName)
-            if (resId != 0) {
-                val vectorDrawable = ResourcesCompat.getDrawable(resources, resId, theme)
-                if (vectorDrawable != null) return vectorDrawable
-            }
-        }
-        return IconHelper.toMinimalistIcon(originalIcon)
     }
 
     private fun loadInstalledApps() {
@@ -87,12 +70,12 @@ class MainActivity : AppCompatActivity() {
             if (pkg == packageName) continue
             val label = ri.loadLabel(pm).toString()
             val rawIcon = ri.loadIcon(pm)
-            val minimalistIcon = getCustomMinimalIcon(pkg, rawIcon)
-            allApps.add(AppModel(label, pkg, minimalistIcon))
+            
+            // Konversi dinamis ke outline putih
+            val outlineIcon = IconHelper.toMinimalistOutline(rawIcon)
+            allApps.add(AppModel(label, pkg, outlineIcon))
         }
         allApps.sortBy { it.label.lowercase() }
-
-        filterAppsByLetter('A')
     }
 
     private fun filterAppsByLetter(letter: Char) {
@@ -104,8 +87,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRuler() {
-        val ruler: RulerSliderView = findViewById(R.id.rulerSlider)
-        ruler.onLetterSelectedListener = { letter: Char ->
+        rulerView = findViewById(R.id.rulerSlider)
+        rulerView.onLetterSelectedListener = { letter: Char ->
             filterAppsByLetter(letter)
         }
     }
@@ -113,8 +96,9 @@ class MainActivity : AppCompatActivity() {
     private fun setupFavorites() {
         for (slotIndex in 0 until 4) {
             val iv = favoriteViews[slotIndex]
-            updateFavoriteSlotIcon(slotIndex, iv)
+            updateFavoriteSlotView(slotIndex, iv)
 
+            // Klik biasa: Buka aplikasi
             iv.setOnClickListener {
                 val pkgName = prefs.getString("fav_slot_$slotIndex", null)
                 if (pkgName != null) {
@@ -129,6 +113,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            // Tahan lama: Ubah pilihan aplikasi favorit
             iv.setOnLongClickListener {
                 showAppPickerDialog(slotIndex)
                 true
@@ -136,19 +121,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateFavoriteSlotIcon(slotIndex: Int, imageView: ImageView) {
+    private fun updateFavoriteSlotView(slotIndex: Int, iv: ImageView) {
         val pkgName = prefs.getString("fav_slot_$slotIndex", null)
         if (pkgName != null) {
             try {
                 val rawIcon = packageManager.getApplicationIcon(pkgName)
-                val minimalIcon = getCustomMinimalIcon(pkgName, rawIcon)
-                imageView.setImageDrawable(minimalIcon)
-                imageView.alpha = 1.0f
+                iv.setImageDrawable(IconHelper.toMinimalistOutline(rawIcon))
+                iv.alpha = 1.0f
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
         }
-        imageView.setImageResource(android.R.drawable.ic_input_add)
-        imageView.alpha = 0.4f
+        
+        // Ikon placeholder default jika slot belum diisi aplikasi
+        iv.setImageResource(android.R.drawable.ic_input_add)
+        iv.alpha = 0.3f
     }
 
     private fun showAppPickerDialog(slotIndex: Int) {
@@ -158,7 +144,7 @@ class MainActivity : AppCompatActivity() {
             .setItems(appNames) { _, which ->
                 val selectedApp = allApps[which]
                 prefs.edit().putString("fav_slot_$slotIndex", selectedApp.packageName).apply()
-                updateFavoriteSlotIcon(slotIndex, favoriteViews[slotIndex])
+                updateFavoriteSlotView(slotIndex, favoriteViews[slotIndex])
             }
             .setNegativeButton("Batal", null)
             .show()
