@@ -32,46 +32,47 @@ class HorizontalRulerView @JvmOverloads constructor(
     var onLetterSelectedListener: ((Char) -> Unit)? = null
 
     init {
-        // Default awal di huruf J atau A
-        selectedIndex = 9 // Huruf 'J' di tengah
+        selectedIndex = 0 // Default awal di huruf 'A'
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val w = width.toFloat()
         val h = height.toFloat()
-        val itemWidth = w / 7f // Menampilkan sekitar 7 huruf dalam satu layar (sepertiga rentang)
+        val itemWidth = w / 7f // Menampilkan sekitar 7 huruf dalam satu layar
 
         val centerX = w / 2f
 
         for (i in alphabet.indices) {
-            // Posisi X relatif terhadap gesekan scroll
             val x = centerX + (i - selectedIndex) * itemWidth + scrollOffset
             
-            // Batasi render hanya huruf yang mendekati layar agar ringan
             if (x < -itemWidth || x > w + itemWidth) continue
 
             val distanceFromCenter = abs(x - centerX)
             val isSelected = distanceFromCenter < (itemWidth / 2f)
 
-            // Garis skala milimeter di atas huruf
-            val tickLen = if (isSelected) 18f else 10f
-            tickPaint.strokeWidth = if (isSelected) 2f else 1f
-            tickPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#444444")
-            canvas.drawLine(x, 4f, x, 4f + tickLen, tickPaint)
+            // 1. Skala Garis Milimeter di atas Huruf A-Z
+            // Garis tick utama tepat di atas huruf
+            val mainTickLen = if (isSelected) 22f else 14f
+            tickPaint.strokeWidth = if (isSelected) 2.5f else 1.2f
+            tickPaint.color = if (isSelected) Color.WHITE else Color.parseColor("#666666")
+            canvas.drawLine(x, 2f, x, 2f + mainTickLen, tickPaint)
 
-            // Sub-garis milimeter kecil di antara huruf
+            // Sub-garis tick milimeter kecil di antara huruf (pembagi skala)
+            val subTickLen = if (isSelected) 12f else 8f
             tickPaint.strokeWidth = 1f
-            tickPaint.color = Color.parseColor("#262626")
-            canvas.drawLine(x + (itemWidth / 2f), 4f, x + (itemWidth / 2f), 4f + 6f, tickPaint)
+            tickPaint.color = Color.parseColor("#444444")
+            canvas.drawLine(x + (itemWidth / 3f), 2f, x + (itemWidth / 3f), 2f + subTickLen, tickPaint)
+            canvas.drawLine(x + (2f * itemWidth / 3f), 2f, x + (2f * itemWidth / 3f), 2f + subTickLen, tickPaint)
 
-            // Render huruf A-Z
+            // 2. Render Huruf A-Z
             val alpha = (255f * (1f - (distanceFromCenter / (w / 2f)).coerceIn(0f, 0.8f))).toInt()
-            textPaint.color = if (isSelected) Color.WHITE else Color.argb(alpha.coerceAtLeast(50), 200, 200, 200)
-            textPaint.textSize = if (isSelected) 38f else 26f
+            textPaint.color = if (isSelected) Color.WHITE else Color.argb(alpha.coerceAtLeast(60), 200, 200, 200)
+            textPaint.textSize = if (isSelected) 40f else 28f
             textPaint.isFakeBoldText = isSelected
 
-            canvas.drawText(alphabet[i].toString(), x, h - 12f, textPaint)
+            // Posisi teks huruf berada di bawah skala garis milimeter
+            canvas.drawText(alphabet[i].toString(), x, h - 8f, textPaint)
         }
     }
 
