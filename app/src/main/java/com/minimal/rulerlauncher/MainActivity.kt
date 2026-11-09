@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
     private val displayedApps = mutableListOf<AppModel>()
     private lateinit var appAdapter: AppAdapter
     private lateinit var rvApps: RecyclerView
-    private lateinit var rulerView: RulerSliderView
+    private lateinit var horizontalRuler: HorizontalRulerView
     private lateinit var prefs: SharedPreferences
 
     private val favoriteViews = mutableListOf<ImageView>()
@@ -40,9 +40,10 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         loadInstalledApps()
         setupFavorites()
-        setupRuler()
+        setupHorizontalRuler()
 
-        rulerView.setSelectedLetter('A')
+        // Default awal pada huruf A
+        horizontalRuler.setSelectedLetter('A')
         filterAppsByLetter('A')
     }
 
@@ -70,8 +71,8 @@ class MainActivity : AppCompatActivity() {
             val label = ri.loadLabel(pm).toString()
             val rawIcon = ri.loadIcon(pm)
             
-            // Ekstrak pola asli ke dalam squircle outline putih
-            val minimalistIcon = IconHelper.createMinimalistIcon(rawIcon)
+            // Ikon Smart ID dengan garis outline dinamis
+            val minimalistIcon = IconHelper.createMinimalistIcon(rawIcon, label)
             allApps.add(AppModel(label, pkg, minimalistIcon))
         }
         allApps.sortBy { it.label.lowercase() }
@@ -85,9 +86,9 @@ class MainActivity : AppCompatActivity() {
         appAdapter.notifyDataSetChanged()
     }
 
-    private fun setupRuler() {
-        rulerView = findViewById(R.id.rulerSlider)
-        rulerView.onLetterSelectedListener = { letter: Char ->
+    private fun setupHorizontalRuler() {
+        horizontalRuler = findViewById(R.id.horizontalRuler)
+        horizontalRuler.onLetterSelectedListener = { letter: Char ->
             filterAppsByLetter(letter)
         }
     }
@@ -123,7 +124,9 @@ class MainActivity : AppCompatActivity() {
         if (pkgName != null) {
             try {
                 val rawIcon = packageManager.getApplicationIcon(pkgName)
-                iv.setImageDrawable(IconHelper.createMinimalistIcon(rawIcon))
+                val appInfo = packageManager.getApplicationInfo(pkgName, 0)
+                val label = packageManager.getApplicationLabel(appInfo).toString()
+                iv.setImageDrawable(IconHelper.createMinimalistIcon(rawIcon, label))
                 iv.alpha = 1.0f
                 return
             } catch (_: PackageManager.NameNotFoundException) {}
