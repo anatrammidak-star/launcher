@@ -33,6 +33,49 @@
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:fontFamily="sans-serif" />
+        
+    <!-- Jam, Tanggal & Widget Lokasi/Waktu Shalat di Kiri Atas -->
+    <LinearLayout
+        android:id="@+id/headerClock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:orientation="vertical">
+
+        <TextClock
+            android:id="@+id/textClock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format24Hour="HH:mm"
+            android:format12Hour="hh:mm"
+            android:textColor="@color/text_primary"
+            android:textSize="46sp"
+            android:fontFamily="sans-serif-light" />
+
+        <TextClock
+            android:id="@+id/textDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format24Hour="EEEE, d MMMM"
+            android:format12Hour="EEEE, d MMMM"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif" />
+
+        <!-- Widget Kecil Lokasi & Waktu Shalat -->
+        <TextView
+            android:id="@+id/tvLocationPrayer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Bogor • Dzuhur 11:46"
+            android:textColor="#9E9E9E"
+            android:textSize="12sp"
+            android:letterSpacing="0.02"
+            android:fontFamily="sans-serif-medium" />
+    </LinearLayout>
+        
+    
     </LinearLayout>
 
     <!-- 4 Slot Ikon Favorit Horizontal -->
