@@ -84,7 +84,7 @@
             android:contentDescription="Fav 4" />
     </LinearLayout>
 
-    <!-- Daftar Aplikasi di Sisi Kanan (Dari Atas ke Bawah) -->
+    <!-- Daftar Aplikasi di Sisi Kanan (Batas bawah dinaikkan agar tidak tumpang tindih dengan 3 dot) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvApps"
         android:layout_width="220dp"
@@ -92,15 +92,15 @@
         android:layout_below="@id/favContainer"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="116dp"
         android:overScrollMode="never" />
 
-    <!-- Penggaris Horizontal Bersih di Bagian Bawah (dengan Quick Jump Dots & Skala Milimeter) -->
+    <!-- Penggaris Horizontal Bersih di Bagian Bawah -->
     <com.minimal.rulerlauncher.HorizontalRulerView
         android:id="@+id/horizontalRuler"
         android:layout_width="match_parent"
-        android:layout_height="84dp"
+        android:layout_height="104dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="10dp" />
+        android:layout_marginBottom="8dp" />
 
 </RelativeLayout>
