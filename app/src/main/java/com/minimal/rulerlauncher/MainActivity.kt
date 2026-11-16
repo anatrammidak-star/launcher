@@ -1,9 +1,14 @@
 package com.minimal.rulerlauncher
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,8 +17,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appAdapter: AppAdapter
     private lateinit var rvApps: RecyclerView
     private lateinit var horizontalRuler: HorizontalRulerView
+    private lateinit var tvLocationPrayer: TextView
     private lateinit var prefs: SharedPreferences
 
     private val favoriteViews = mutableListOf<ImageView>()
@@ -31,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         prefs = getSharedPreferences("launcher_favs", Context.MODE_PRIVATE)
+        tvLocationPrayer = findViewById(R.id.tvLocationPrayer)
 
         favoriteViews.add(findViewById(R.id.favWhatsApp))
         favoriteViews.add(findViewById(R.id.favMaps))
@@ -45,6 +55,111 @@ class MainActivity : AppCompatActivity() {
         // Default awal pada huruf A
         horizontalRuler.setSelectedLetter('A')
         filterAppsByLetter('A')
+
+        // Ketuk widget lokasi/shalat untuk memaksa pembaruan koordinat GPS
+        tvLocationPrayer.setOnClickListener {
+            requestLocationAndUpdatePrayer()
+        }
+
+        requestLocationAndUpdatePrayer()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateLocationAndPrayerWidget()
+    }
+
+    private fun requestLocationAndUpdatePrayer() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ),
+                101
+            )
+        } else {
+            updateLocationAndPrayerWidget()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 101 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            updateLocationAndPrayerWidget()
+        }
+    }
+
+    private fun updateLocationAndPrayerWidget() {
+        // Default koordinat Bogor apabila GPS belum aktif atau izin belum diberikan
+        var lat = prefs.getFloat("last_lat", -6.5971f).toDouble()
+        var lng = prefs.getFloat("last_lng", 106.8060f).toDouble()
+        var cityName = prefs.getString("last_city", "Bogor") ?: "Bogor"
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val providers = lm.getProviders(true)
+            var bestLocation: Location? = null
+            for (provider in providers) {
+                val l = lm.getLastKnownLocation(provider) ?: continue
+                if (bestLocation == null || l.accuracy < bestLocation.accuracy) {
+                    bestLocation = l
+                }
+            }
+
+            if (bestLocation != null) {
+                lat = bestLocation.latitude
+                lng = bestLocation.longitude
+                prefs.edit()
+                    .putFloat("last_lat", lat.toFloat())
+                    .putFloat("last_lng", lng.toFloat())
+                    .apply()
+
+                resolveCityName(lat, lng) { resolvedCity ->
+                    if (resolvedCity.isNotEmpty()) {
+                        cityName = resolvedCity
+                        prefs.edit().putString("last_city", cityName).apply()
+                        val nextPrayer = PrayerHelper.getNextPrayer(lat, lng)
+                        tvLocationPrayer.text = "$cityName  •  ${nextPrayer.name} ${nextPrayer.time}"
+                    }
+                }
+            }
+        }
+
+        val nextPrayer = PrayerHelper.getNextPrayer(lat, lng)
+        tvLocationPrayer.text = "$cityName  •  ${nextPrayer.name} ${nextPrayer.time}"
+    }
+
+    @Suppress("DEPRECATION")
+    private fun resolveCityName(lat: Double, lng: Double, callback: (String) -> Unit) {
+        try {
+            val geocoder = Geocoder(this, Locale("id", "ID"))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                geocoder.getFromLocation(lat, lng, 1) { addresses ->
+                    val addr = addresses.firstOrNull()
+                    val city = addr?.subAdminArea ?: addr?.locality ?: ""
+                    val cleanCity = city.replace("Kota ", "").replace("Kabupaten ", "")
+                    runOnUiThread { callback(cleanCity) }
+                }
+            } else {
+                val addresses = geocoder.getFromLocation(lat, lng, 1)
+                val addr = addresses?.firstOrNull()
+                val city = addr?.subAdminArea ?: addr?.locality ?: ""
+                val cleanCity = city.replace("Kota ", "").replace("Kabupaten ", "")
+                callback(cleanCity)
+            }
+        } catch (_: Exception) {
+            // Abaikan jika perangkat offline, tetap gunakan nama kota terakhir yang tersimpan
+        }
     }
 
     private fun setupRecyclerView() {
@@ -70,8 +185,6 @@ class MainActivity : AppCompatActivity() {
             if (pkg == packageName) continue
             val label = ri.loadLabel(pm).toString()
             val rawIcon = ri.loadIcon(pm)
-            
-            // Ikon Smart ID dengan garis outline dinamis
             val minimalistIcon = IconHelper.createMinimalistIcon(rawIcon, label)
             allApps.add(AppModel(label, pkg, minimalistIcon))
         }
