@@ -6,34 +6,6 @@
     android:paddingStart="24dp"
     android:paddingEnd="16dp">
 
-    <!-- Jam & Tanggal di Kiri Atas -->
-    <LinearLayout
-        android:id="@+id/headerClock"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:orientation="vertical">
-
-        <TextClock
-            android:id="@+id/textClock"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format24Hour="HH:mm"
-            android:format12Hour="hh:mm"
-            android:textColor="@color/text_primary"
-            android:textSize="46sp"
-            android:fontFamily="sans-serif-light" />
-
-        <TextClock
-            android:id="@+id/textDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format24Hour="EEEE, d MMMM"
-            android:format12Hour="EEEE, d MMMM"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp"
-            android:fontFamily="sans-serif" />
-        
     <!-- Jam, Tanggal & Widget Lokasi/Waktu Shalat di Kiri Atas -->
     <LinearLayout
         android:id="@+id/headerClock"
@@ -68,14 +40,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Bogor • Dzuhur 11:46"
+            android:text="Bogor  •  Dzuhur 11:46"
             android:textColor="#9E9E9E"
             android:textSize="12sp"
             android:letterSpacing="0.02"
             android:fontFamily="sans-serif-medium" />
-    </LinearLayout>
-        
-    
     </LinearLayout>
 
     <!-- 4 Slot Ikon Favorit Horizontal -->
@@ -115,7 +84,7 @@
             android:contentDescription="Fav 4" />
     </LinearLayout>
 
-   <!-- Daftar Aplikasi di Sisi Kanan (Dari Atas ke Bawah) -->
+    <!-- Daftar Aplikasi di Sisi Kanan (Dari Atas ke Bawah) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvApps"
         android:layout_width="220dp"
@@ -126,13 +95,12 @@
         android:layout_marginBottom="96dp"
         android:overScrollMode="never" />
 
-    <!-- Penggaris Horizontal Bersih di Bagian Bawah -->
+    <!-- Penggaris Horizontal Bersih di Bagian Bawah (dengan Quick Jump Dots & Skala Milimeter) -->
     <com.minimal.rulerlauncher.HorizontalRulerView
         android:id="@+id/horizontalRuler"
         android:layout_width="match_parent"
         android:layout_height="84dp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp" />
-   
-   
+
 </RelativeLayout>
